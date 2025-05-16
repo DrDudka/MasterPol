@@ -43,5 +43,12 @@ namespace УП_PR1
             partnerEditForm.Show();
             this.Hide();
         }
+
+        private void buttonHistory_Click(object sender, EventArgs e)
+        {
+            HistoryForm histroryForm = new HistoryForm();
+            histroryForm.Show();
+            this.Hide();
+        }
     }
 }

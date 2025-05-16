@@ -3,10 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
-using System.Drawing;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace УП_PR1.Forms
@@ -15,6 +12,7 @@ namespace УП_PR1.Forms
     {
         private readonly string connectionString = "Host=localhost;Database=master_pol;Username=postgres;Password=123;Port=5433";
         private readonly int userId;
+        private readonly List<TextBox> requiredTextBoxes = new List<TextBox>();
 
         public PartnerEditForm()
         {
@@ -23,6 +21,7 @@ namespace УП_PR1.Forms
             ConfigureDataGridView();
         }
 
+        // Загрузка данных из БД
         private void LoadData()
         {
             using (var conn = new NpgsqlConnection(connectionString))
@@ -33,7 +32,7 @@ namespace УП_PR1.Forms
                     {
                         connection.Open();
 
-                        string query = "SELECT * FROM Partners";
+                        string query = "SELECT * FROM Partners ORDER BY name";
 
                         using (NpgsqlCommand command = new NpgsqlCommand(query, connection))
                         {
@@ -55,6 +54,7 @@ namespace УП_PR1.Forms
             }
         }
 
+        // Конфигурация DataGridView
         private void ConfigureDataGridView()
         {
             dataGridViewPartners.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
@@ -101,6 +101,17 @@ namespace УП_PR1.Forms
             }
         }
 
+        //Валидация рейтинга
+        private void txtRating_Validating(object sender, CancelEventArgs e)
+        {
+            if (!decimal.TryParse(txtRating.Text, out decimal rating) || rating < 0 || rating > 10)
+            {
+                MessageBox.Show("Рейтинг должен быть в диапазоне от 0 до 10");
+                txtRating.Focus();
+                txtRating.SelectAll();
+            }
+        }
+
         private void buttonEditPartner_Click(object sender, EventArgs e)
         {
             if (dataGridViewPartners.SelectedRows.Count == 0)
@@ -143,13 +154,28 @@ namespace УП_PR1.Forms
                         command.Parameters.AddWithValue("@Rating", Convert.ToDecimal(txtRating.Text));
 
                         int rowsAffected = command.ExecuteNonQuery();
+                        
+                        foreach (var textBox in requiredTextBoxes)
+                        {
+                            textBox.Focus();
+                            this.ValidateChildren();
+                        }
+
+                        bool hasErrors = requiredTextBoxes.Any(t => !string.IsNullOrEmpty(errorProvider1.GetError(t)));
+
+                        if (hasErrors)
+                        {
+                            MessageBox.Show("Заполните все обязательные поля", "Ошибка",
+                                          MessageBoxButtons.OK, MessageBoxIcon.Error);
+                            return;
+                        }
 
                         if (rowsAffected > 0)
                         {
                             MessageBox.Show("Данные обновлены!", "Успех");
                             LoadData();
                         }
-                    }
+                    }                   
                 }
             }
             catch (Exception ex)
@@ -158,11 +184,61 @@ namespace УП_PR1.Forms
             }
         }
 
+        private void TextBox_Validating(object sender, CancelEventArgs e)
+        {
+            TextBox textBox = sender as TextBox;
+            if (string.IsNullOrWhiteSpace(textBox.Text))
+            {
+                errorProvider1.SetError(textBox, "Поле обязательно для заполнения");
+            }
+            else
+            {
+                errorProvider1.SetError(textBox, "");
+            }
+        }
+
         private void buttonAddPartner_Click(object sender, EventArgs e)
         {
             PartnerAddForm partnerAddForm = new PartnerAddForm();
             partnerAddForm.Show();
             this.Hide();
+        }
+
+        private void PartnerEditForm_Load(object sender, EventArgs e)
+        {
+            requiredTextBoxes.Add(txtName);
+            requiredTextBoxes.Add(txtDirector);
+            requiredTextBoxes.Add(txtLegalAddress);
+            requiredTextBoxes.Add(txtINN);
+
+            foreach (var textBox in requiredTextBoxes)
+            {
+                textBox.Validating += TextBox_Validating;
+            }
+        }
+
+        private void txtINN_KeyPress(object sender, KeyPressEventArgs e)
+        {
+            if (!char.IsDigit(e.KeyChar) && e.KeyChar != '\b')
+            {
+                e.Handled = true;
+                return;
+            }
+
+            TextBox textBox = sender as TextBox;
+            if (textBox.Text.Length >= 10 && e.KeyChar != '\b')
+            {
+                e.Handled = true;
+            }
+        }
+
+        private void txtPhone_KeyPress(object sender, KeyPressEventArgs e)
+        {
+            if (!char.IsDigit(e.KeyChar) && e.KeyChar != '\b')
+            {
+                e.Handled = true;
+                return;
+            }
         }
     }
 }

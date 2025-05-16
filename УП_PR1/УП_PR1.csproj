@@ -95,6 +95,12 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Forms\CalculateMaterialForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Forms\CalculateMaterialForm.Designer.cs">
+      <DependentUpon>CalculateMaterialForm.cs</DependentUpon>
+    </Compile>
     <Compile Include="Forms\AuthForm.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -126,8 +132,18 @@
     <Compile Include="Forms\PartnerViewForm.Designer.cs">
       <DependentUpon>PartnerViewForm.cs</DependentUpon>
     </Compile>
+    <Compile Include="Forms\HistoryForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Forms\HistoryForm.Designer.cs">
+      <DependentUpon>HistoryForm.cs</DependentUpon>
+    </Compile>
+    <Compile Include="ProductionCalculator.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <EmbeddedResource Include="Forms\CalculateMaterialForm.resx">
+      <DependentUpon>CalculateMaterialForm.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="Forms\AuthForm.resx">
       <DependentUpon>AuthForm.cs</DependentUpon>
     </EmbeddedResource>
@@ -142,6 +158,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="Forms\PartnerViewForm.resx">
       <DependentUpon>PartnerViewForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Forms\HistoryForm.resx">
+      <DependentUpon>HistoryForm.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Properties\Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>

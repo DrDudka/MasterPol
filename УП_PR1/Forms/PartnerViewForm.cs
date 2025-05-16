@@ -1,4 +1,5 @@
 ﻿using Npgsql;
+using System;
 using System.Drawing;
 using System.Windows.Forms;
 using УП_PR1.Forms;
@@ -22,7 +23,14 @@ namespace УП_PR1
             {
                 conn.Open();
 
-                string query = @"SELECT * FROM partners";
+                string query = @"SELECT pa.name, pa.partner_type, pa.director, pa.phone, pa.rating,
+                               SUM(pp.count) AS count
+                        FROM partners as pa
+                        JOIN partners_products as pp ON pa.partner_id = pp.partner_id
+                        JOIN products as pr ON pr.product_id = pp.product_id
+                        GROUP BY pa.partner_id
+                        ORDER BY pa.name";
+
                 using (var cmd = new NpgsqlCommand(query, conn))
                 using (var reader = cmd.ExecuteReader())
                 {
@@ -35,6 +43,14 @@ namespace УП_PR1
             }
         }
 
+        private static decimal CalculateDiscount(decimal totalSales)
+        {
+            if (totalSales < 10000m) return 0m;
+            if (totalSales < 50000m) return 5m;
+            if (totalSales < 300000m) return 10m;
+            return 15m;
+        }
+
         private Panel CreatePartnerPanel(NpgsqlDataReader reader)
         {
             Panel panel = new Panel()
@@ -42,13 +58,27 @@ namespace УП_PR1
                 Size = new Size(950, 150),
                 BorderStyle = BorderStyle.Fixed3D,
                 Margin = new Padding(10),
-                BackColor = Color.FromArgb(0x67, 0xBA, 0x80)
+                BackColor = Color.FromArgb(0x67, 0xBA, 0x80),
+                Cursor = Cursors.Hand
             };
+
+            panel.Click += (s, e) => OpenPartnerEditForm();
 
             Label TypeAndPartner = new Label()
             {
                 Location = new Point(10, 10),
                 Text = reader["partner_type"] + " | " + reader["name"],
+                AutoSize = true,
+                Font = new Font("Segoe UI", 16),
+            };
+
+            decimal totalSales = reader["count"] != DBNull.Value ? Convert.ToDecimal(reader["count"]) : 0;
+            decimal discount = CalculateDiscount(totalSales);
+
+            Label Discount = new Label()
+            {
+                Location = new Point(850, 10),
+                Text = $"{discount}%",
                 AutoSize = true,
                 Font = new Font("Segoe UI", 16)
             };
@@ -81,8 +111,17 @@ namespace УП_PR1
             panel.Controls.Add(Director);
             panel.Controls.Add(Phone);
             panel.Controls.Add(Rating);
+            panel.Controls.Add(Discount);
 
             return panel;
+        }
+
+        private void OpenPartnerEditForm()
+        {
+            PartnerEditForm editForm = new PartnerEditForm();
+            editForm.FormClosed += (s, args) => LoadData();
+            editForm.Show();
+            this.Hide();
         }
 
         private void PartnerForm_FormClosed(object sender, FormClosedEventArgs e)
@@ -108,6 +147,13 @@ namespace УП_PR1
         {
             PartnerEditForm partnerEditForm = new PartnerEditForm();
             partnerEditForm.Show();
+            this.Hide();
+        }
+
+        private void buttonHistory_Click(object sender, EventArgs e)
+        {
+            var calcForm = new HistoryForm();
+            calcForm.Show();
             this.Hide();
         }
     }
